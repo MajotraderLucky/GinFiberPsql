@@ -8,5 +8,17 @@ services:
     networks:
       - mynetwork
 
+  mainapp:
+    build: .
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+    depends_on:
+      - db
+    networks:
+      - mynetwork
+    environment:
+      TZ: Europe/Moscow
+
 networks:
   mynetwork: {}
