@@ -10,6 +10,9 @@ services:
 
   ginapi:
     build: ./apigin
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
     ports:
       - "8080:8080"
     networks:

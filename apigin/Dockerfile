@@ -20,4 +20,4 @@ RUN go build -o apigin .
 EXPOSE 8085
 
 # Run the binary program produced by go install
-CMD sh -c "go run apigin.go"
+CMD sh -c "go run apigin/apigin.go"
