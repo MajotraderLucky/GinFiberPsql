@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/MajotraderLucky/Utils/logger"
+	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 )
 
@@ -32,6 +34,39 @@ func InsertTestData(db *sql.DB) error {
 
 	log.Println("Test data inserted successfully")
 	return nil
+}
+
+// Function to add data through the API
+func addDataHandler(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Structure for parsing the request body
+		var data struct {
+			Name        string `json:"name"`
+			Surname     string `json:"surname"`
+			Patronymic  string `json:"patronymic"`
+			Age         int    `json:"age"`
+			Gender      string `json:"gender"`
+			Nationality string `json:"nationality"`
+		}
+
+		// Parsing the JSON body of the request
+		if err := c.ShouldBindJSON(&data); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		// SQL query to add data
+		query := `INSERT INTO fio_data (name, surname, patronymic, age, gender, nationality) VALUES ($1, $2, $3, $4, $5, $6)`
+		_, err := db.Exec(query, data.Name, data.Surname, data.Patronymic, data.Age, data.Gender, data.Nationality)
+		if err != nil {
+			log.Printf("Error inserting data: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error inserting data"})
+			return
+		}
+
+		// Response about successful data addition
+		c.JSON(http.StatusOK, gin.H{"message": "Data added successfully"})
+	}
 }
 
 func main() {
@@ -66,4 +101,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Creating a Gin router
+	router := gin.Default()
+
+	// Registering the handler for adding data
+	router.POST("/add_data", addDataHandler(db))
+
+	// Starting the server
+	log.Fatal(router.Run(":8085"))
 }
