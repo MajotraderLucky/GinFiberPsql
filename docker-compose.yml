@@ -8,6 +8,17 @@ services:
     networks:
       - mynetwork
 
+  ginapi:
+    build: ./apigin
+    ports:
+      - "8080:8080"
+    networks:
+      - mynetwork
+    depends_on:
+      - db
+    environment:
+      TZ: Europe/Moscow
+
   mainapp:
     build: .
     volumes:
@@ -15,6 +26,7 @@ services:
       - ./logs:/app/logs
     depends_on:
       - db
+      - ginapi
     networks:
       - mynetwork
     environment:
