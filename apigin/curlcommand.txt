@@ -1,1 +1,3 @@
 curl -X POST http://localhost:8085/add_data      -H "Content-Type: application/json"      -d '{"name":"Иван", "surname":"Иванов", "patronymic":"Иванович", "age":30, "gender":"мужской", "nationality":"Россия"}'
+
+curl "http://localhost:8085/query_person?name=Иван&surname=Иванов"

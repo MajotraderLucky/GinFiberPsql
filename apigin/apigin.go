@@ -69,6 +69,71 @@ func addDataHandler(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
+func queryPersonByNameAndSurname(db *sql.DB, name, surname string) (int, string, string, string, int, string, string, error) {
+	// The query uses the composite index idx_fio_data_name_surname
+	query := `SELECT id, name, surname, patronymic, age, gender, nationality FROM fio_data WHERE name = $1 AND surname = $2;`
+
+	// Executing the query
+	row := db.QueryRow(query, name, surname)
+
+	// Reading the results
+	var (
+		id            int
+		resultName    string
+		resultSurname string
+		patronymic    string
+		age           int
+		gender        string
+		nationality   string
+	)
+
+	err := row.Scan(&id, &resultName, &resultSurname, &patronymic, &age, &gender, &nationality)
+	if err != nil {
+		return 0, "", "", "", 0, "", "", err
+	}
+
+	return id, resultName, resultSurname, patronymic, age, gender, nationality, nil
+}
+
+// Handler for querying a person by name and surname
+func queryPersonHandler(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Getting name and surname from the request query parameters
+		name := c.Query("name")
+		surname := c.Query("surname")
+
+		// Checking if both name and surname are provided
+		if name == "" || surname == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Both name and surname must be provided"})
+			return
+		}
+
+		// Using the queryPersonByNameAndSurname function to query the database
+		id, resultName, resultSurname, patronymic, age, gender, nationality, err := queryPersonByNameAndSurname(db, name, surname)
+		if err != nil {
+			// Handling the case when the person is not found or there is an error querying the database
+			if err == sql.ErrNoRows {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Person not found"})
+			} else {
+				log.Printf("Error querying person by name and surname: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Error querying person"})
+			}
+			return
+		}
+
+		// Returning the found person's data
+		c.JSON(http.StatusOK, gin.H{
+			"id":          id,
+			"name":        resultName,
+			"surname":     resultSurname,
+			"patronymic":  patronymic,
+			"age":         age,
+			"gender":      gender,
+			"nationality": nationality,
+		})
+	}
+}
+
 func main() {
 	time.Sleep(time.Second * 10)
 
@@ -107,6 +172,7 @@ func main() {
 
 	// Registering the handler for adding data
 	router.POST("/add_data", addDataHandler(db))
+	router.GET("/query_person", queryPersonHandler(db))
 
 	// Starting the server
 	log.Fatal(router.Run(":8085"))
