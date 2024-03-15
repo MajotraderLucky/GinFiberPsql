@@ -39,7 +39,7 @@ func queryPersonByNameAndSurname(db *sql.DB, name, surname string) (int, string,
 
 func main() {
 	// Wait for other services to be ready
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 20)
 
 	logger := logger.Logger{}
 	err := logger.CreateLogsDir()
@@ -66,8 +66,8 @@ func main() {
 	defer db.Close()
 
 	// Filter values
-	name := "Иван"
-	surname := "Иванов"
+	name := "Ivan"
+	surname := "Ivanov"
 
 	// Using the function to execute the query
 	id, resultName, resultSurname, patronymic, age, gender, nationality, err := queryPersonByNameAndSurname(db, name, surname)
