@@ -1,3 +1,12 @@
 curl -X POST http://localhost:8085/add_data      -H "Content-Type: application/json"      -d '{"name":"Иван", "surname":"Иванов", "patronymic":"Иванович", "age":30, "gender":"мужской", "nationality":"Россия"}'
 
 curl "http://localhost:8085/query_person?name=Иван&surname=Иванов"
+
+curl "http://localhost:8085/query_person?name=Sergey&surname=Ryazanov" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImV4YW1wbGVVc2VyIiwiZXhwIjoxNzEwNjY2ODY3fQ.uVIJTrrpak1HLD8LDopX_O2nLT3UC1c0-F49MeUUOTA"
+
+curl -X POST http://localhost:8085/add_data \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImV4YW1wbGVVc2VyIiwiZXhwIjoxNzEwNjY2ODY3fQ.uVIJTrrpak1HLD8LDopX_O2nLT3UC1c0-F49MeUUOTA" \
+     -d '{"name":"Sergey", "surname":"Ryazanov", "patronymic":"Viktorovich", "age":46, "gender":"мужской", "nationality":"Россия"}'
+
+

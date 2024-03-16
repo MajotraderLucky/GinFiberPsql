@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/MajotraderLucky/Utils/logger"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	_ "github.com/lib/pq"
 )
 
@@ -134,6 +136,44 @@ func queryPersonHandler(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
+var jwtKey = []byte("8GoPUxkoCEeKaEG381hL6p9RAfwgCaiDJhrwy+/k8Og=") // Replace with your key
+
+// JWTAuthMiddleware checks for the presence and validity of a JWT token
+func JWTAuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			c.Abort()
+			return
+		}
+
+		tokenString := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			// Ensure the token signature algorithm is expected
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+
+			return jwtKey, nil
+		})
+
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			c.Abort()
+			return
+		}
+
+		if !token.Valid {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
 func main() {
 	time.Sleep(time.Second * 10)
 
@@ -171,8 +211,8 @@ func main() {
 	router := gin.Default()
 
 	// Registering the handler for adding data
-	router.POST("/add_data", addDataHandler(db))
-	router.GET("/query_person", queryPersonHandler(db))
+	router.POST("/add_data", JWTAuthMiddleware(), addDataHandler(db))
+	router.GET("/query_person", JWTAuthMiddleware(), queryPersonHandler(db))
 
 	// Starting the server
 	log.Fatal(router.Run(":8085"))
